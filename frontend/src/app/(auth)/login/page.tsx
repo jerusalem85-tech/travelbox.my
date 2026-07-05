@@ -80,6 +80,10 @@ export default function LoginPage() {
             {isLoading ? 'Signing in...' : 'Sign In'}
           </Button>
         </form>
+
+          <p className="text-center text-xs text-muted-foreground mt-6">
+            v1.0.0
+          </p>
       </Card>
     </div>
   );
