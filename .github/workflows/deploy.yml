@@ -45,7 +45,8 @@ jobs:
           local-dir: ./
           server-dir: /
           port: 21
-          protocol: ftp
+          protocol: ftps
+          security: strict
           exclude: |
             .git/**
             .gitignore
