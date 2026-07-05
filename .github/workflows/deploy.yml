@@ -44,7 +44,15 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./
           server-dir: /
+          port: 21
+          protocol: ftp
           exclude: |
             .git/**
             .gitignore
-            **node_modules/**
+            .env
+            .env.example
+            .env.local
+            **/*.ts
+            **/*.tsx
+            prisma/seed.ts
+            next-env.d.ts
