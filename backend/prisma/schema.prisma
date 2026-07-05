@@ -1,0 +1,1208 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== ENUMS ====================
+
+enum UserRole {
+  OWNER
+  MANAGER
+  SALES
+  OPERATIONS
+  ACCOUNTING
+  TICKETING
+  VISA_OFFICER
+  READ_ONLY
+}
+
+enum WorkflowStage {
+  LEAD
+  QUOTATION
+  NEGOTIATION
+  CONFIRMED
+  DEPOSIT_PAID
+  BOOKED
+  TICKETED
+  DOCUMENTS_SENT
+  TRAVELING
+  COMPLETED
+  CANCELLED
+  ARCHIVED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ServiceStatus {
+  PENDING
+  REQUESTED
+  CONFIRMED
+  TICKETED
+  AMENDED
+  CANCELLED
+  COMPLETED
+  REFUNDED
+}
+
+enum ServiceType {
+  FLIGHT
+  HOTEL
+  TRANSFER
+  TOUR
+  VISA
+  INSURANCE
+  CAR_RENTAL
+  CRUISE
+  TRAIN
+  OTHER
+}
+
+enum FlightType {
+  ONE_WAY
+  ROUND_TRIP
+  MULTI_CITY
+  OPEN_JAW
+}
+
+enum CabinClass {
+  ECONOMY
+  PREMIUM_ECONOMY
+  BUSINESS
+  FIRST
+}
+
+enum MealType {
+  STANDARD
+  VEGETARIAN
+  VEGAN
+  KOSHER
+  HALAL
+  CHILD
+  SPECIAL
+}
+
+enum BoardType {
+  ROOM_ONLY
+  BREAKFAST
+  HALF_BOARD
+  FULL_BOARD
+  ALL_INCLUSIVE
+}
+
+enum TransferType {
+  PRIVATE
+  SHARED
+  VIP
+  SHUTTLE
+}
+
+enum VisaStatus {
+  PENDING
+  SUBMITTED
+  PROCESSING
+  APPROVED
+  REJECTED
+  EXPIRED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  CREDIT_CARD
+  BANK_TRANSFER
+  CHEQUE
+  PAYPAL
+  STRIPE
+  WISE
+  CRYPTO
+  OTHER
+}
+
+enum PaymentDirection {
+  INCOMING
+  OUTGOING
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  PARTIAL
+  OVERDUE
+  REFUNDED
+  CANCELLED
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  OVERDUE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum NotificationType {
+  PASSPORT_EXPIRY
+  VISA_EXPIRY
+  PAYMENT_DUE
+  SUPPLIER_PAYMENT_DUE
+  UPCOMING_DEPARTURE
+  HOTEL_CONFIRMATION_MISSING
+  FLIGHT_TICKET_MISSING
+  TASK_ASSIGNED
+  TASK_OVERDUE
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+  PAYMENT_RECEIVED
+  GENERAL
+}
+
+enum DocumentCategory {
+  PASSPORT
+  VISA
+  TICKET
+  VOUCHER
+  INVOICE
+  RECEIPT
+  INSURANCE
+  CONTRACT
+  IMAGE
+  PDF
+  OTHER
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+// ==================== AUTH & USERS ====================
+
+model User {
+  id                String         @id @default(uuid())
+  email             String         @unique
+  password          String
+  firstName         String
+  lastName          String
+  phone             String?
+  avatar            String?
+  role              UserRole       @default(SALES)
+  isActive          Boolean        @default(true)
+  lastLoginAt       DateTime?
+  refreshToken      String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  assignedTrips     Trip[]         @relation("AssignedUser")
+  createdTrips      Trip[]         @relation("CreatedBy")
+  tasks             Task[]
+  notifications     Notification[]
+  auditLogs         AuditLog[]
+  uploadedDocuments Document[]
+
+  @@map("users")
+}
+
+// ==================== CUSTOMERS (CRM) ====================
+
+model Customer {
+  id              String    @id @default(uuid())
+  type            String    @default("INDIVIDUAL") // INDIVIDUAL | COMPANY
+  firstName       String?
+  lastName        String?
+  companyName     String?
+  email           String?
+  phone           String?
+  whatsapp        String?
+  passportNumber  String?
+  passportExpiry  DateTime?
+  nationality     String?
+  dateOfBirth     DateTime?
+  gender          Gender?
+  address         String?
+  city            String?
+  country         String?
+  postalCode      String?
+  notes           String?
+  isVip           Boolean   @default(false)
+  totalTrips      Int       @default(0)
+  totalSpent      Float     @default(0)
+  outstandingBalance Float  @default(0)
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  trips       Trip[]
+  payments    Payment[]
+  invoices    Invoice[]  @relation("CustomerInvoices")
+  creditNotes CreditNote[] @relation("CustomerCreditNotes")
+  documents   Document[] @relation("CustomerDocuments")
+  loyalty     LoyaltyProgram[]
+
+  @@index([email])
+  @@index([phone])
+  @@index([passportNumber])
+  @@index([type])
+  @@map("customers")
+}
+
+model LoyaltyProgram {
+  id         String   @id @default(uuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  program    String   // e.g., "Miles & More", "Emirates Skywards"
+  cardNumber String?
+  tier       String?
+  points     Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([customerId, program])
+  @@map("loyalty_programs")
+}
+
+// ==================== SUPPLIERS ====================
+
+model Supplier {
+  id              String   @id @default(uuid())
+  category        String   // AIRLINE | HOTEL | VISA | INSURANCE | TRANSFER | TOUR | CAR_RENTAL | CRUISE | TRAIN | OTHER
+  companyName     String
+  contactPerson   String?
+  email           String?
+  phone           String?
+  whatsapp        String?
+  website         String?
+  address         String?
+  city            String?
+  country         String?
+  currency        String   @default("USD")
+  commissionRate  Float    @default(0)
+  taxRate         Float    @default(0)
+  paymentTerms    String?
+  bankName        String?
+  bankAccount     String?
+  bankIban        String?
+  bankSwift       String?
+  notes           String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  contracts     Contract[]
+  services      Service[]
+  flights       Flight[]
+  hotelBookings HotelBooking[]
+  transfers     Transfer[]
+  tours         Tour[]
+  visaServices  VisaApplication[]
+  insurances    Insurance[]
+  carRentals    CarRental[]
+  cruises       Cruise[]
+  trains        Train[]
+  payments      SupplierPayment[]
+  documents     Document[]       @relation("SupplierDocuments")
+
+  @@index([category])
+  @@index([companyName])
+  @@map("suppliers")
+}
+
+model Contract {
+  id          String    @id @default(uuid())
+  supplierId  String
+  supplier    Supplier  @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  title       String
+  contractNo  String?
+  startDate   DateTime
+  endDate     DateTime?
+  terms       String?
+  commission  Float     @default(0)
+  currency    String    @default("USD")
+  isActive    Boolean   @default(true)
+  filePath    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("contracts")
+}
+
+// ==================== TRIPS (Core Entity) ====================
+
+model Trip {
+  id              String        @id @default(uuid())
+  tripNumber      String        @unique
+  name            String?
+  status          WorkflowStage @default(LEAD)
+  customerId      String?
+  customer        Customer?     @relation(fields: [customerId], references: [id])
+  primaryContact  String?
+  assignedToId    String?
+  assignedTo      User?         @relation("AssignedUser", fields: [assignedToId], references: [id])
+  createdById     String?
+  createdBy       User?         @relation("CreatedBy", fields: [createdById], references: [id])
+  source          String?
+  priority        Priority      @default(MEDIUM)
+  color           String?
+  tags            String[]      // postgres text array
+  agency          String?
+  startDate       DateTime?
+  endDate         DateTime?
+  duration        Int?
+  destination     String?
+  destinationCities    String[]  // auto-built by CityEngine
+  destinationCountries String[]  // auto-built by CityEngine
+  currency        String        @default("USD")
+  totalCost       Float         @default(0)
+  totalSelling    Float         @default(0)
+  totalProfit     Float         @default(0)
+  totalCommission Float         @default(0)
+  totalPaid       Float         @default(0)
+  totalSupplierPaid Float       @default(0)
+  totalSupplierBalance Float    @default(0)
+  margin          Float         @default(0)
+  paymentStatus   String        @default("UNPAID")
+  notes           String?
+  internalNotes   String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  passengers     Passenger[]
+  services       Service[]
+  payments       Payment[]
+  invoices       Invoice[]      @relation("TripInvoices")
+  expenses       Expense[]
+  documents      Document[]     @relation("TripDocuments")
+  tasks          Task[]
+  timeline       TimelineEntry[]
+
+  @@index([tripNumber])
+  @@index([customerId])
+  @@index([status])
+  @@index([startDate])
+  @@index([destination])
+  @@map("trips")
+}
+
+// ==================== PASSENGERS ====================
+
+model Passenger {
+  id                String    @id @default(uuid())
+  tripId            String
+  trip              Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  firstName         String
+  lastName          String
+  dateOfBirth       DateTime?
+  gender            Gender?
+  nationality       String?
+  passportNumber    String?
+  passportExpiry    DateTime?
+  passportIssueDate DateTime?
+  passportCountry   String?
+  mealPreference    String?
+  seatPreference    String?
+  specialRequests   String?
+  medicalNotes      String?
+  emergencyContact  String?
+  emergencyPhone    String?
+  frequentFlyerAirline String?
+  frequentFlyerNumber String?
+  isLeadPassenger   Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  flightSegments FlightPassenger[]
+  hotelGuests    HotelGuest[]
+  visaApplications VisaPassenger[]
+  documents      Document[]    @relation("PassengerDocuments")
+
+  @@index([tripId])
+  @@index([passportNumber])
+  @@index([lastName, firstName])
+  @@map("passengers")
+}
+
+// ==================== SERVICES (Generic) ====================
+
+model Service {
+  id                  String        @id @default(uuid())
+  tripId              String
+  trip                Trip          @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  type                ServiceType
+  sortOrder           Int           @default(0)
+
+  // Service chain (doubly-linked list — managed by application code)
+  previousId          String?
+  nextId              String?
+
+  // Location context (city IDs — managed by application code)
+  locationId          String?
+  previousCityId      String?
+  nextCityId          String?
+
+  // Dates
+  startDate           DateTime?
+  endDate             DateTime?
+  startTime           String?
+  endTime             String?
+  departureAt         DateTime?
+  arrivalAt           DateTime?
+  checkinAt           DateTime?
+  checkoutAt          DateTime?
+
+  // Supplier info
+  supplierId          String?
+  supplier            Supplier?     @relation(fields: [supplierId], references: [id])
+  supplierReference   String?
+
+  // Financial
+  costPrice           Float         @default(0)
+  sellingPrice        Float         @default(0)
+  profit              Float         @default(0)
+  commissionAmount    Float         @default(0)
+  commissionRate      Float         @default(0)
+  paidAmount          Float         @default(0)
+  remainingAmount     Float         @default(0)
+  currency            String        @default("USD")
+  exchangeRate        Float         @default(1)
+  taxAmount           Float         @default(0)
+
+  // Status & references
+  status              ServiceStatus @default(PENDING)
+  isOptional          Boolean       @default(false)
+  description         String?
+  confirmationNumber  String?
+  bookingReference    String?
+  voucherNumber       String?
+  invoiceNumber       String?
+  cancellationPolicy  String?
+  notes               String?
+  internalNotes       String?
+
+  // Link to type-specific detail
+  flight              Flight?
+  hotel               HotelBooking?
+  transfer            Transfer?
+  tour                Tour?
+  cruise              Cruise?
+  visa                VisaApplication?
+  insurance           Insurance?
+  carRental           CarRental?
+  train               Train?
+
+  supplierPayments    SupplierPayment[]
+  documents           Document[]      @relation("ServiceDocuments")
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  @@index([tripId])
+  @@index([type])
+  @@index([sortOrder])
+  @@index([previousId])
+  @@index([supplierId])
+  @@index([status])
+  @@map("services")
+}
+
+// ==================== FLIGHTS ====================
+
+model Flight {
+  id               String     @id @default(uuid())
+  serviceId        String     @unique
+  service          Service    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  supplierId       String?
+  supplier         Supplier?  @relation(fields: [supplierId], references: [id])
+  flightType       FlightType @default(ONE_WAY)
+  pnr              String?
+  ticketNumber     String?
+  airline          String?
+  flightNumber     String?
+  cabinClass       CabinClass @default(ECONOMY)
+  fareClass        String?
+  departureAirport String?
+  arrivalAirport   String?
+  departureTime    DateTime?
+  arrivalTime      DateTime?
+  departureTerminal String?
+  arrivalTerminal  String?
+  departureGate    String?
+  arrivalGate      String?
+  mealType         MealType?
+  baggageAllowance String?
+  seats            String?
+  layoverDuration  String?
+  totalDuration    String?
+  fareAmount       Float      @default(0)
+  taxAmount        Float      @default(0)
+  totalAmount      Float      @default(0)
+  isCharter        Boolean    @default(false)
+  status           String?
+  notes            String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  passengers FlightPassenger[]
+
+  @@index([pnr])
+  @@index([ticketNumber])
+  @@index([flightNumber])
+  @@index([departureTime])
+  @@map("flights")
+}
+
+model FlightPassenger {
+  id          String   @id @default(uuid())
+  flightId    String
+  flight      Flight   @relation(fields: [flightId], references: [id], onDelete: Cascade)
+  passengerId String
+  passenger   Passenger @relation(fields: [passengerId], references: [id], onDelete: Cascade)
+  ticketNumber String?
+  seatNumber  String?
+  fareAmount  Float    @default(0)
+  taxAmount   Float    @default(0)
+  checkInUrl  String?
+  boardingPassUrl String?
+  createdAt   DateTime @default(now())
+
+  @@unique([flightId, passengerId])
+  @@map("flight_passengers")
+}
+
+// ==================== HOTELS ====================
+
+model HotelBooking {
+  id                 String    @id @default(uuid())
+  serviceId          String    @unique
+  service            Service   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  supplierId         String?
+  supplier           Supplier? @relation(fields: [supplierId], references: [id])
+  hotelName          String?
+  roomType           String?
+  boardType          BoardType @default(BREAKFAST)
+  checkIn            DateTime?
+  checkOut           DateTime?
+  rooms              Int       @default(1)
+  adults             Int       @default(2)
+  children           Int       @default(0)
+  childrenAges       String?
+  confirmationNumber String?
+  cancellationPolicy String?
+  status             String?
+  notes              String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  guests HotelGuest[]
+
+  @@index([confirmationNumber])
+  @@map("hotel_bookings")
+}
+
+model HotelGuest {
+  id          String       @id @default(uuid())
+  hotelId     String
+  hotel       HotelBooking @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  passengerId String
+  passenger   Passenger    @relation(fields: [passengerId], references: [id], onDelete: Cascade)
+  isChild     Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+
+  @@unique([hotelId, passengerId])
+  @@map("hotel_guests")
+}
+
+// ==================== TRANSFERS ====================
+
+model Transfer {
+  id              String       @id @default(uuid())
+  serviceId       String       @unique
+  service         Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  supplierId      String?
+  supplier        Supplier?    @relation(fields: [supplierId], references: [id])
+  transferType    TransferType @default(PRIVATE)
+  pickupLocation  String?
+  dropoffLocation String?
+  pickupTime      DateTime?
+  meetingTime     DateTime?
+  flightNumber    String?
+  vehicleType     String?
+  driverName      String?
+  driverPhone     String?
+  emergencyNumber String?
+  passengers      Int          @default(1)
+  baggageInfo     String?
+  notes           String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@map("transfers")
+}
+
+// ==================== TOURS ====================
+
+model Tour {
+  id            String   @id @default(uuid())
+  serviceId     String   @unique
+  service       Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  supplierId    String?
+  supplier      Supplier? @relation(fields: [supplierId], references: [id])
+  tourName      String?
+  meetingPoint  String?
+  startTime     DateTime?
+  endTime       DateTime?
+  duration      String?
+  guideName     String?
+  guidePhone    String?
+  language      String?
+  voucherNumber String?
+  includes      String?
+  excludes      String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("tours")
+}
+
+// ==================== VISA ====================
+
+model VisaApplication {
+  id            String     @id @default(uuid())
+  serviceId     String     @unique
+  service       Service    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  supplierId    String?
+  supplier      Supplier?  @relation(fields: [supplierId], references: [id])
+  country       String?
+  visaType      String?
+  applicationNo String?
+  issueDate     DateTime?
+  expiryDate    DateTime?
+  entryType     String?    // SINGLE | MULTIPLE
+  validityDays  Int?
+  status        VisaStatus @default(PENDING)
+  notes         String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  passengers VisaPassenger[]
+
+  @@index([applicationNo])
+  @@map("visa_applications")
+}
+
+model VisaPassenger {
+  id              String         @id @default(uuid())
+  visaId          String
+  visa            VisaApplication @relation(fields: [visaId], references: [id], onDelete: Cascade)
+  passengerId     String
+  passenger       Passenger      @relation(fields: [passengerId], references: [id], onDelete: Cascade)
+  passportNumber  String?
+  applicationDate DateTime?
+  status          VisaStatus?
+  notes           String?
+  createdAt       DateTime       @default(now())
+
+  @@unique([visaId, passengerId])
+  @@map("visa_passengers")
+}
+
+// ==================== INSURANCE ====================
+
+model Insurance {
+  id             String   @id @default(uuid())
+  serviceId      String   @unique
+  service        Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  supplierId     String?
+  supplier       Supplier? @relation(fields: [supplierId], references: [id])
+  company        String?
+  policyNumber   String?
+  coverage       String?
+  startDate      DateTime?
+  endDate        DateTime?
+  emergencyPhone String?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("insurances")
+}
+
+// ==================== CAR RENTAL ====================
+
+model CarRental {
+  id              String   @id @default(uuid())
+  serviceId       String   @unique
+  service         Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  supplierId      String?
+  supplier        Supplier? @relation(fields: [supplierId], references: [id])
+  company         String?
+  pickupLocation  String?
+  dropoffLocation String?
+  pickupTime      DateTime?
+  dropoffTime     DateTime?
+  carType         String?
+  insurance       String?
+  fuelPolicy      String?
+  confirmationNumber String?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("car_rentals")
+}
+
+// ==================== CRUISE ====================
+
+model Cruise {
+  id              String     @id @default(uuid())
+  serviceId       String     @unique
+  service         Service    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  supplierId      String?
+  supplier        Supplier?  @relation(fields: [supplierId], references: [id])
+  cruiseName      String?
+  shipName        String?
+  cabinType       String?
+  embarkPort      String?
+  disembarkPort   String?
+  embarkDate      DateTime?
+  disembarkDate   DateTime?
+  itinerary       String?
+  notes           String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@map("cruises")
+}
+
+// ==================== TRAIN ====================
+
+model Train {
+  id               String   @id @default(uuid())
+  serviceId        String   @unique
+  service          Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  supplierId       String?
+  supplier         Supplier? @relation(fields: [supplierId], references: [id])
+  trainName        String?
+  trainNumber      String?
+  departureStation String?
+  arrivalStation   String?
+  departureTime    DateTime?
+  arrivalTime      DateTime?
+  cabinClass       String?
+  seatNumber       String?
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("trains")
+}
+
+// ==================== TIMELINE ====================
+
+model TimelineEntry {
+  id        String   @id @default(uuid())
+  tripId    String
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  date      DateTime?
+  time      String?
+  title     String
+  subtitle  String?
+  icon      String?  // flight, hotel, transfer, tour, visa, etc.
+  type      String   // DEPARTURE | ARRIVAL | FLIGHT | HOTEL | TRANSFER | TOUR | FREE_DAY | NOTE
+  serviceId String?  // optional link to service
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([tripId, date])
+  @@map("timeline_entries")
+}
+
+// ==================== PAYMENTS ====================
+
+model Payment {
+  id            String         @id @default(uuid())
+  paymentNumber String         @unique
+  tripId        String?
+  trip          Trip?          @relation(fields: [tripId], references: [id])
+  customerId    String?
+  customer      Customer?      @relation(fields: [customerId], references: [id])
+  direction     PaymentDirection
+  method        PaymentMethod  @default(CASH)
+  amount        Float
+  currency      String         @default("USD")
+  exchangeRate  Float          @default(1)
+  status        PaymentStatus  @default(PENDING)
+  dueDate       DateTime?
+  paidDate      DateTime?
+  reference     String?
+  description   String?
+  isInstallment Boolean        @default(false)
+  installmentNo Int?
+  notes         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([paymentNumber])
+  @@index([tripId])
+  @@index([customerId])
+  @@index([status])
+  @@map("payments")
+}
+
+model SupplierPayment {
+  id              String        @id @default(uuid())
+  paymentNumber   String        @unique
+  supplierId      String
+  supplier        Supplier      @relation(fields: [supplierId], references: [id])
+  serviceId       String?
+  service         Service?      @relation(fields: [serviceId], references: [id])
+  method          PaymentMethod @default(CASH)
+  amount          Float
+  currency        String        @default("USD")
+  exchangeRate    Float         @default(1)
+  status          PaymentStatus @default(PENDING)
+  dueDate         DateTime?
+  paidDate        DateTime?
+  reference       String?
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([supplierId])
+  @@index([paymentNumber])
+  @@map("supplier_payments")
+}
+
+// ==================== ACCOUNTING ====================
+
+model Invoice {
+  id            String         @id @default(uuid())
+  invoiceNumber String         @unique
+  tripId        String?
+  trip          Trip?          @relation("TripInvoices", fields: [tripId], references: [id])
+  customerId    String?
+  customer      Customer?      @relation("CustomerInvoices", fields: [customerId], references: [id])
+  issueDate     DateTime       @default(now())
+  dueDate       DateTime?
+  subtotal      Float          @default(0)
+  taxAmount     Float          @default(0)
+  discount      Float          @default(0)
+  total         Float          @default(0)
+  paidAmount    Float          @default(0)
+  currency      String         @default("USD")
+  status        String         @default("DRAFT") // DRAFT | SENT | PAID | PARTIAL | OVERDUE | CANCELLED
+  notes         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  items InvoiceItem[]
+  creditNotes CreditNote[]
+
+  @@index([invoiceNumber])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Int      @default(1)
+  unitPrice   Float
+  totalPrice  Float
+  taxRate     Float    @default(0)
+  createdAt   DateTime @default(now())
+
+  @@map("invoice_items")
+}
+
+model CreditNote {
+  id            String   @id @default(uuid())
+  creditNoteNo  String   @unique
+  invoiceId     String?
+  invoice       Invoice?   @relation(fields: [invoiceId], references: [id])
+  customerId    String?
+  customer      Customer?  @relation("CustomerCreditNotes", fields: [customerId], references: [id])
+  amount        Float
+  currency      String   @default("USD")
+  reason        String?
+  status        String   @default("DRAFT")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("credit_notes")
+}
+
+model Expense {
+  id            String   @id @default(uuid())
+  expenseNumber String   @unique
+  tripId        String?
+  trip          Trip?    @relation(fields: [tripId], references: [id])
+  category      String?
+  description   String
+  amount        Float
+  currency      String   @default("USD")
+  date          DateTime @default(now())
+  vendor        String?
+  receiptPath   String?
+  status        String   @default("PENDING")
+  approvedBy    String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([tripId])
+  @@map("expenses")
+}
+
+// ==================== TASKS ====================
+
+model Task {
+  id          String       @id @default(uuid())
+  tripId      String?
+  trip        Trip?        @relation(fields: [tripId], references: [id])
+  assignedTo  String?
+  assignedUser User?       @relation(fields: [assignedTo], references: [id])
+  title       String
+  description String?
+  status      TaskStatus   @default(PENDING)
+  priority    TaskPriority @default(MEDIUM)
+  dueDate     DateTime?
+  completedAt DateTime?
+  category    String?      // SUPPLIER_FOLLOWUP | VISA_FOLLOWUP | CUSTOMER_FOLLOWUP | GENERAL
+  relatedId   String?
+  relatedType String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([tripId])
+  @@index([assignedTo])
+  @@index([status])
+  @@index([dueDate])
+  @@map("tasks")
+}
+
+// ==================== NOTIFICATIONS ====================
+
+model Notification {
+  id          String           @id @default(uuid())
+  userId      String?
+  user        User?            @relation(fields: [userId], references: [id])
+  type        NotificationType
+  title       String
+  message     String?
+  isRead      Boolean          @default(false)
+  readAt      DateTime?
+  relatedId   String?
+  relatedType String?
+  actionUrl   String?
+  createdAt   DateTime         @default(now())
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+// ==================== DOCUMENTS ====================
+
+model Document {
+  id          String           @id @default(uuid())
+  name        String
+  type        String?          // original mime type
+  category    DocumentCategory @default(OTHER)
+  filePath    String
+  fileSize    Int?
+  mimeType    String?
+  tripId      String?
+  passengerId String?
+  customerId  String?
+  supplierId  String?
+  serviceId   String?
+  uploadedById String?
+  uploadedBy  User?            @relation(fields: [uploadedById], references: [id])
+  notes       String?
+  isGenerated Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  trip      Trip?      @relation("TripDocuments", fields: [tripId], references: [id], onDelete: SetNull)
+  passenger Passenger? @relation("PassengerDocuments", fields: [passengerId], references: [id], onDelete: SetNull)
+  customer  Customer?  @relation("CustomerDocuments", fields: [customerId], references: [id], onDelete: SetNull)
+  supplier  Supplier?  @relation("SupplierDocuments", fields: [supplierId], references: [id], onDelete: SetNull)
+  service   Service?   @relation("ServiceDocuments", fields: [serviceId], references: [id], onDelete: SetNull)
+
+  @@index([tripId])
+  @@index([customerId])
+  @@index([supplierId])
+  @@index([category])
+  @@map("documents")
+}
+
+// ==================== MULTI-CURRENCY ====================
+
+model ExchangeRate {
+  id        String   @id @default(uuid())
+  from      String
+  to        String
+  rate      Float
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@unique([from, to, date])
+  @@map("exchange_rates")
+}
+
+// ==================== AUDIT LOG ====================
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  action      String
+  module      String
+  entityId    String?
+  entityType  String?
+  oldValues   Json?
+  newValues   Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([module])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ==================== MASTER DATA ====================
+
+model Currency {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  symbol    String?
+  rate      Float    @default(1)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("currencies")
+}
+
+model Country {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  code      String   @unique
+  phoneCode String?
+  currency  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cities City[]
+
+  @@map("countries")
+}
+
+model City {
+  id        String   @id @default(uuid())
+  name      String
+  code      String?
+  countryId String
+  country   Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, countryId])
+  @@map("cities")
+}
+
+model Airline {
+  id        String   @id @default(uuid())
+  name      String
+  code      String   @unique
+  logo      String?
+  country   String?
+  alliance  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("airlines")
+}
+
+model Hotel {
+  id        String   @id @default(uuid())
+  name      String
+  stars     Int?
+  chain     String?
+  address   String?
+  city      String?
+  country   String?
+  phone     String?
+  email     String?
+  website   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  roomTypes HotelRoomType[]
+
+  @@map("hotels")
+}
+
+model HotelRoomType {
+  id        String   @id @default(uuid())
+  hotelId   String
+  hotel     Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  name      String
+  code      String?
+  capacity  Int?
+  maxAdults Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, hotelId])
+  @@map("hotel_room_types")
+}
+
+model Tax {
+  id        String   @id @default(uuid())
+  name      String
+  rate      Float
+  type      String   @default("PERCENTAGE")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("taxes")
+}
+
+model Setting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  category  String   @default("general")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
