@@ -36,24 +36,16 @@ jobs:
           cd backend && npm prune --production && cd ..
           cd frontend && npm prune --production && cd ..
 
+      - name: Test FTP connection
+        run: |
+          curl --connect-timeout 15 -s ftp://${{ secrets.FTP_HOST }}/ -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" --list-only && echo "FTP OK"
+
       - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./
-          server-dir: /
-          port: 21
-          protocol: ftps
-          security: strict
-          exclude: |
-            .git/**
-            .gitignore
-            .env
-            .env.example
-            .env.local
-            **/*.ts
-            **/*.tsx
-            prisma/seed.ts
-            next-env.d.ts
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+          lftp -c "open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_HOST }}; mirror -R -v \
+            -x '\.git/' \
+            -x 'backend/node_modules/' \
+            -x 'frontend/node_modules/' \
+            -x 'docker/' \
+            -x '\.env' . /"
