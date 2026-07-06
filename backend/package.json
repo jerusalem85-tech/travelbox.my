@@ -10,7 +10,7 @@
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push --accept-data-loss",
     "prisma:seed": "ts-node prisma/seed.ts",
-    "postinstall": "prisma generate && prisma db push --accept-data-loss && ts-node prisma/seed.ts",
+    "db:setup": "prisma generate && prisma db push --accept-data-loss && ts-node prisma/seed.ts",
     "lint": "eslint src --ext .ts",
     "test": "jest",
     "test:e2e": "jest --config ./test/jest-e2e.json"
