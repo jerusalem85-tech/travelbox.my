@@ -27,7 +27,7 @@ export class TripsService {
         destination: dto.destination,
         currency: dto.currency || 'USD',
         notes: dto.notes,
-        tags: dto.tags ? (typeof dto.tags === 'string' ? dto.tags.split(',').map(t => t.trim()).filter(Boolean) : dto.tags) : [],
+        tags: dto.tags ? (typeof dto.tags === 'string' ? dto.tags : JSON.stringify(dto.tags)) : '[]',
       },
       include: { customer: true, assignedTo: true, createdBy: true },
     });
@@ -42,17 +42,17 @@ export class TripsService {
 
     if (search) {
       where.OR = [
-        { tripNumber: { contains: search, mode: 'insensitive' } },
-        { destination: { contains: search, mode: 'insensitive' } },
+        { tripNumber: { contains: search } },
+        { destination: { contains: search } },
         { customer: { OR: [
-          { firstName: { contains: search, mode: 'insensitive' } },
-          { lastName: { contains: search, mode: 'insensitive' } },
-          { companyName: { contains: search, mode: 'insensitive' } },
+          { firstName: { contains: search } },
+          { lastName: { contains: search } },
+          { companyName: { contains: search } },
         ]}},
       ];
     }
     if (status) where.status = status;
-    if (destination) where.destination = { contains: destination, mode: 'insensitive' };
+    if (destination) where.destination = { contains: destination };
     if (startDate) where.startDate = { gte: new Date(startDate) };
     if (endDate) where.endDate = { lte: new Date(endDate) };
     if (customerId) where.customerId = customerId;
@@ -116,7 +116,7 @@ export class TripsService {
     if (dto.currency !== undefined) data.currency = dto.currency;
     if (dto.notes !== undefined) data.notes = dto.notes;
     if (dto.internalNotes !== undefined) data.internalNotes = dto.internalNotes;
-    if (dto.tags !== undefined) data.tags = dto.tags;
+    if (dto.tags !== undefined) data.tags = typeof dto.tags === 'string' ? dto.tags : JSON.stringify(dto.tags);
     if (dto.startDate !== undefined) data.startDate = dto.startDate ? new Date(dto.startDate) : null;
     if (dto.endDate !== undefined) data.endDate = dto.endDate ? new Date(dto.endDate) : null;
 

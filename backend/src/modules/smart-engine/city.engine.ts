@@ -75,8 +75,8 @@ export class CityEngine {
     await this.prisma.trip.update({
       where: { id: tripId },
       data: {
-        destinationCities: summary.cities,
-        destinationCountries: summary.countries,
+        destinationCities: JSON.stringify(summary.cities),
+        destinationCountries: JSON.stringify(summary.countries),
         duration: summary.nightCount || undefined,
       },
     });
