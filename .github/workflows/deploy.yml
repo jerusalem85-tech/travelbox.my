@@ -31,7 +31,7 @@ jobs:
 
       - name: Create .env for backend
         run: |
-          cat > backend/.env << 'EOF'
+          cat > backend/.env << EOF
           DATABASE_URL=${{ secrets.DATABASE_URL }}
           JWT_SECRET=${{ secrets.JWT_SECRET }}
           JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
@@ -44,55 +44,46 @@ jobs:
       - name: Install lftp
         run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
 
-      - name: Configure FTP
+      - name: Deploy all files via FTP
+        env:
+          HOST: ${{ secrets.FTP_HOST }}
+          USER: ${{ secrets.FTP_USERNAME }}
+          PASS: ${{ secrets.FTP_PASSWORD }}
         run: |
-          echo "machine ${{ secrets.FTP_HOST }} login ${{ secrets.FTP_USERNAME }} password ${{ secrets.FTP_PASSWORD }}" > ~/.netrc
-          chmod 600 ~/.netrc
+          lftp -u "$USER","$PASS" "$HOST" << 'FTPCMDS'
+          set ssl:verify-certificate no
+          set ftp:passive-mode on
+          set net:timeout 60
 
-      - name: Deploy server.js
-        run: |
-          lftp -e "set netrc true; set ftp:passive-mode on; set net:timeout 30; \
-            cd /domains/travelbox.my/nodejs; \
-            put $GITHUB_WORKSPACE/server.js; \
-            quit" "${{ secrets.FTP_HOST }}"
+          # Root: server.js
+          cd /domains/travelbox.my/nodejs
+          put $GITHUB_WORKSPACE/server.js
 
-      - name: Deploy backend
-        run: |
-          lftp -e "set netrc true; set ftp:passive-mode on; set net:timeout 30; \
-            cd /domains/travelbox.my/nodejs/backend; \
-            lcd $GITHUB_WORKSPACE/backend; \
-            mirror -R --delete dist/ dist/; \
-            mirror -R --delete prisma/ prisma/; \
-            mirror -R --delete --exclude .cache/ node_modules/ node_modules/; \
-            put package.json; \
-            put .env; \
-            quit" "${{ secrets.FTP_HOST }}"
+          # Backend
+          cd /domains/travelbox.my/nodejs/backend
+          lcd $GITHUB_WORKSPACE/backend
+          mirror -R --delete dist/ dist/
+          mirror -R --delete prisma/ prisma/
+          mirror -R --delete --exclude-glob .cache/ node_modules/ node_modules/
+          put package.json
+          put .env
 
-      - name: Deploy frontend (standalone server)
-        run: |
-          lftp -e "set netrc true; set ftp:passive-mode on; set net:timeout 30; \
-            cd /domains/travelbox.my/nodejs/frontend; \
-            lcd $GITHUB_WORKSPACE/frontend/.next/standalone; \
-            mirror -R --delete . ./; \
-            quit" "${{ secrets.FTP_HOST }}"
+          # Frontend: standalone server + node_modules
+          cd /domains/travelbox.my/nodejs/frontend
+          lcd $GITHUB_WORKSPACE/frontend/.next/standalone
+          mirror -R --delete . ./
 
-      - name: Deploy frontend (static assets)
-        run: |
-          lftp -e "set netrc true; set ftp:passive-mode on; set net:timeout 30; \
-            cd /domains/travelbox.my/nodejs/frontend/.next; \
-            lcd $GITHUB_WORKSPACE/frontend/.next/static; \
-            mirror -R --delete . ./static/; \
-            quit" "${{ secrets.FTP_HOST }}"
+          # Frontend: static assets
+          cd /domains/travelbox.my/nodejs/frontend/.next
+          lcd $GITHUB_WORKSPACE/frontend/.next/static
+          mirror -R --delete . ./static/
 
-      - name: Create Passenger tmp dir
-        run: |
-          lftp -e "set netrc true; set ftp:passive-mode on; set net:timeout 30; \
-            mkdir -p /domains/travelbox.my/nodejs/tmp; \
-            quit" "${{ secrets.FTP_HOST }}"
+          # Create tmp dir
+          mkdir -p /domains/travelbox.my/nodejs/tmp
 
-      - name: Deploy .htaccess (enable Passenger)
-        run: |
-          lftp -e "set netrc true; set ftp:passive-mode on; set net:timeout 30; \
-            cd /domains/travelbox.my/public_html; \
-            put $GITHUB_WORKSPACE/public_html.htaccess -o .htaccess; \
-            quit" "${{ secrets.FTP_HOST }}"
+          # Enable Passenger
+          cd /domains/travelbox.my/public_html
+          put $GITHUB_WORKSPACE/public_html.htaccess -o .htaccess
+
+          quit
+          FTPCMDS
