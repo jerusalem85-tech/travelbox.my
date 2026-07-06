@@ -1,23 +1,18 @@
-name: Deploy to Hostinger
+name: Build and Deploy
 
 on:
   push:
     branches: [master]
 
-env:
-  FTP_DIR: /domains/travelbox.my/nodejs
-
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-
       - name: Build backend
         run: |
           cd backend
@@ -25,38 +20,31 @@ jobs:
           npm run build
           npm prune --production
         shell: bash
-
       - name: Build frontend
         run: |
           cd frontend
           npm install
           NEXT_PUBLIC_API_URL=${{ secrets.API_URL || 'https://travelbox.my/api' }} npm run build
-          npm prune --production
         shell: bash
-
-      - name: Package for deployment
-        run: |
-          mkdir -p deploy
-          cp server.js deploy/
-          cp package.json deploy/
-          cp -r backend/dist deploy/backend-dist
-          cp backend/package.json deploy/backend-pkg.json
-          cp -r backend/node_modules deploy/backend-modules
-          # Copy standalone frontend
-          cp -r frontend/.next/standalone deploy/frontend
-          cp -r frontend/.next/static deploy/frontend/.next/static
-          cp -r frontend/public deploy/frontend/public 2>/dev/null || true
-        shell: bash
-
-      - name: Deploy via FTP
+      - name: Upload backend via FTP
         shell: bash
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq lftp
           echo "machine ${{ secrets.FTP_HOST }} login ${{ secrets.FTP_USERNAME }} password ${{ secrets.FTP_PASSWORD }}" > ~/.netrc
           chmod 600 ~/.netrc
-          lftp -e "set netrc true; set ftp:passive-mode on; set net:timeout 30; set net:max-retries 3; \
-            cd ${{ env.FTP_DIR }}; \
-                rm -rf *; \
-                lcd $GITHUB_WORKSPACE/deploy; \
-                mirror -R . .; \
-                quit" "${{ secrets.FTP_HOST }}"
+          lftp -e "set netrc true; set ftp:passive-mode on; set net:timeout 30; \
+            cd /domains/travelbox.my/nodejs/backend; \
+            lcd $GITHUB_WORKSPACE/backend; \
+            mirror -R -x node_modules -x .git dist/ dist/; \
+            mirror -R -x node_modules -x .git prisma/ prisma/; \
+            put package.json; put package-lock.json; \
+            quit" "${{ secrets.FTP_HOST }}"
+      - name: Upload frontend via FTP
+        shell: bash
+        run: |
+          lftp -e "set netrc true; set ftp:passive-mode on; set net:timeout 30; \
+            cd /domains/travelbox.my/nodejs/frontend; \
+            lcd $GITHUB_WORKSPACE/frontend; \
+            mirror -R -x node_modules -x .git .next/ .next/; \
+            put package.json; \
+            quit" "${{ secrets.FTP_HOST }}"

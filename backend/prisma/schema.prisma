@@ -1,10 +1,9 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["fullTextSearch"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -360,14 +359,14 @@ model Trip {
   source          String?
   priority        Priority      @default(MEDIUM)
   color           String?
-  tags            String[]      // postgres text array
+  tags            String        @default("[]")
   agency          String?
   startDate       DateTime?
   endDate         DateTime?
   duration        Int?
   destination     String?
-  destinationCities    String[]  // auto-built by CityEngine
-  destinationCountries String[]  // auto-built by CityEngine
+  destinationCities    String   @default("[]")
+  destinationCountries String  @default("[]")
   currency        String        @default("USD")
   totalCost       Float         @default(0)
   totalSelling    Float         @default(0)

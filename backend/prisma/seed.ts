@@ -122,7 +122,7 @@ async function main() {
         assignedToId: users[2].id, createdById: users[2].id, source: 'DIRECT', priority: 'HIGH',
         startDate: new Date(now.getTime() + 14 * 86400000), endDate: new Date(now.getTime() + 21 * 86400000),
         duration: 7, destination: 'Dubai, UAE', currency: 'USD', totalCost: 8500, totalSelling: 12500, totalProfit: 4000,
-        totalCommission: 0, margin: 32, notes: 'VIP client - Premium package', tags: ['VIP', 'LUXURY', 'FAMILY'],
+        totalCommission: 0, margin: 32, notes: 'VIP client - Premium package', tags: '["VIP","LUXURY","FAMILY"]',
       },
     }),
     prisma.trip.create({
