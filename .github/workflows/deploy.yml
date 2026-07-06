@@ -4,6 +4,9 @@ on:
   push:
     branches: [master]
 
+env:
+  FTP_DIR: /domains/travelbox.my/nodejs
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -15,44 +18,45 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install backend dependencies
-        run: npm install
-        working-directory: ./backend
-
       - name: Build backend
-        run: npm run build
-        working-directory: ./backend
-
-      - name: Install frontend dependencies
-        run: npm install
-        working-directory: ./frontend
+        run: |
+          cd backend
+          npm install
+          npm run build
+          npm prune --production
+        shell: bash
 
       - name: Build frontend
-        run: npm run build
-        working-directory: ./frontend
-        env:
-          NEXT_PUBLIC_API_URL: ${{ secrets.API_URL || 'https://travelbox.my/api' }}
-
-      - name: Prune dev dependencies
         run: |
-          cd backend && npm prune --production && cd ..
-          cd frontend && npm prune --production && cd ..
+          cd frontend
+          npm install
+          NEXT_PUBLIC_API_URL=${{ secrets.API_URL || 'https://travelbox.my/api' }} npm run build
+          npm prune --production
+        shell: bash
+
+      - name: Package for deployment
+        run: |
+          mkdir -p deploy
+          cp server.js deploy/
+          cp package.json deploy/
+          cp -r backend/dist deploy/backend-dist
+          cp backend/package.json deploy/backend-pkg.json
+          cp -r backend/node_modules deploy/backend-modules
+          # Copy standalone frontend
+          cp -r frontend/.next/standalone deploy/frontend
+          cp -r frontend/.next/static deploy/frontend/.next/static
+          cp -r frontend/public deploy/frontend/public 2>/dev/null || true
+        shell: bash
 
       - name: Deploy via FTP
         shell: bash
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq lftp
-          echo "${{ secrets.FTP_HOST }} login ${{ secrets.FTP_USERNAME }} password ${{ secrets.FTP_PASSWORD }}" > ~/.netrc
+          echo "machine ${{ secrets.FTP_HOST }} login ${{ secrets.FTP_USERNAME }} password ${{ secrets.FTP_PASSWORD }}" > ~/.netrc
           chmod 600 ~/.netrc
-          lftp -e " \
-            set ftp:passive-mode on; \
-            set net:timeout 30; \
-            set net:max-retries 3; \
-            mirror -R -v \
-              -x '\.git/' \
-              -x 'backend/node_modules/' \
-              -x 'frontend/node_modules/' \
-              -x 'docker/' \
-              -x '\.env' \
-              . /; \
-            quit" "${{ secrets.FTP_HOST }}"
+          lftp -e "set netrc true; set ftp:passive-mode on; set net:timeout 30; set net:max-retries 3; \
+            cd ${{ env.FTP_DIR }}; \
+                rm -rf *; \
+                lcd $GITHUB_WORKSPACE/deploy; \
+                mirror -R . .; \
+                quit" "${{ secrets.FTP_HOST }}"
