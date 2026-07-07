@@ -31,6 +31,122 @@ model User {
   refreshToken String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  bookings     Booking[]
+  invoices     Invoice[]
+  expenses     Expense[]
 
   @@map("users")
+}
+
+model Client {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String?
+  email     String?
+  address   String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  bookings  Booking[]
+  invoices  Invoice[]
+
+  @@map("clients")
+}
+
+model Trip {
+  id          String   @id @default(uuid())
+  title       String
+  destination String
+  description String?
+  price       Decimal  @default(0)
+  duration    Int?
+  startDate   DateTime?
+  endDate     DateTime?
+  status      String   @default("active")
+  maxCapacity Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  bookings    Booking[]
+
+  @@map("trips")
+}
+
+enum BookingStatus {
+  CONFIRMED
+  PENDING
+  CANCELLED
+  COMPLETED
+}
+
+model Booking {
+  id          String        @id @default(uuid())
+  status      BookingStatus @default(PENDING)
+  totalAmount Decimal       @default(0)
+  paidAmount  Decimal       @default(0)
+  notes       String?
+  travelDate  DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  clientId    String
+  tripId      String?
+  createdById String
+  client      Client        @relation(fields: [clientId], references: [id])
+  trip        Trip?         @relation(fields: [tripId], references: [id])
+  createdBy   User          @relation(fields: [createdById], references: [id])
+  invoices    Invoice[]
+
+  @@map("bookings")
+}
+
+enum InvoiceStatus {
+  PAID
+  PENDING
+  OVERDUE
+}
+
+model Invoice {
+  id          String        @id @default(uuid())
+  description String?
+  amount      Decimal       @default(0)
+  status      InvoiceStatus @default(PENDING)
+  date        DateTime      @default(now())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  clientId    String?
+  bookingId   String?
+  createdById String
+  client      Client?       @relation(fields: [clientId], references: [id])
+  booking     Booking?      @relation(fields: [bookingId], references: [id])
+  createdBy   User          @relation(fields: [createdById], references: [id])
+
+  @@map("invoices")
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  description String
+  category    String
+  amount      Decimal  @default(0)
+  date        DateTime @default(now())
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+
+  @@map("expenses")
+}
+
+model Supplier {
+  id        String   @id @default(uuid())
+  name      String
+  type      String?
+  phone     String?
+  email     String?
+  address   String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("suppliers")
 }

@@ -18,6 +18,7 @@ import {
 const navItems = [
   { href: "/dashboard", label: "لوحة التحكم", icon: LayoutDashboard },
   { href: "/dashboard/clients", label: "العملاء", icon: Users },
+  { href: "/dashboard/trips", label: "الرحلات", icon: Plane },
   { href: "/dashboard/invoices", label: "الفواتير", icon: FileText },
   { href: "/dashboard/expenses", label: "المصروفات", icon: Wallet },
   { href: "/dashboard/reports", label: "التقارير", icon: BarChart3 },
@@ -33,15 +34,16 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    const auth = localStorage.getItem("travelbox_auth");
-    if (!auth) {
-      router.push("/");
+    const token = localStorage.getItem("travelbox_token");
+    if (!token) {
+      router.push("/login");
     }
   }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem("travelbox_auth");
-    router.push("/");
+    localStorage.removeItem("travelbox_token");
+    localStorage.removeItem("travelbox_user");
+    router.push("/login");
   };
 
   return (
