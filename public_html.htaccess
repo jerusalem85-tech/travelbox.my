@@ -1,0 +1,6 @@
+PassengerAppRoot /home/u908372329/domains/travelbox.my/nodejs
+PassengerAppType node
+PassengerNodejs /opt/alt/alt-nodejs20/root/bin/node
+PassengerStartupFile server.js
+PassengerBaseURI /
+PassengerRestartDir /home/u908372329/domains/travelbox.my/nodejs/tmp
