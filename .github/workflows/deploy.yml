@@ -55,11 +55,9 @@ jobs:
           set ftp:passive-mode on
           set net:timeout 60
 
-          # Root: server.js
           cd /domains/travelbox.my/nodejs
           put $GITHUB_WORKSPACE/server.js
 
-          # Backend
           cd /domains/travelbox.my/nodejs/backend
           lcd $GITHUB_WORKSPACE/backend
           mirror -R --delete dist/ dist/
@@ -68,20 +66,16 @@ jobs:
           put package.json
           put .env
 
-          # Frontend: standalone server + node_modules
           cd /domains/travelbox.my/nodejs/frontend
           lcd $GITHUB_WORKSPACE/frontend/.next/standalone
           mirror -R --delete . ./
 
-          # Frontend: static assets
           cd /domains/travelbox.my/nodejs/frontend/.next
           lcd $GITHUB_WORKSPACE/frontend/.next/static
           mirror -R --delete . ./static/
 
-          # Create tmp dir
           mkdir -p /domains/travelbox.my/nodejs/tmp
 
-          # Enable Passenger
           cd /domains/travelbox.my/public_html
           put $GITHUB_WORKSPACE/public_html.htaccess -o .htaccess
 

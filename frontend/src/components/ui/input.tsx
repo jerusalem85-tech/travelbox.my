@@ -1,30 +1,24 @@
-import { forwardRef, type InputHTMLAttributes } from 'react';
-import { cn } from '@/lib/utils';
+import { InputHTMLAttributes } from 'react';
+import { clsx } from 'clsx';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
   error?: string;
 }
 
-const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, error, ...props }, ref) => {
-    return (
-      <div className="w-full">
-        <input
-          className={cn(
-            'flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
-            error && 'border-destructive focus-visible:ring-destructive',
-            className
-          )}
-          ref={ref}
-          {...props}
-        />
-        {error && (
-          <p className="mt-1 text-xs text-destructive">{error}</p>
+export function Input({ label, error, className, ...props }: InputProps) {
+  return (
+    <div className="space-y-1">
+      {label && <label className="block text-sm font-medium text-gray-700">{label}</label>}
+      <input
+        className={clsx(
+          'block w-full rounded-lg border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
+          error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300',
+          className,
         )}
-      </div>
-    );
-  }
-);
-Input.displayName = 'Input';
-
-export { Input, type InputProps };
+        {...props}
+      />
+      {error && <p className="text-sm text-red-600">{error}</p>}
+    </div>
+  );
+}

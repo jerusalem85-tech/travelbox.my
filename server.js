@@ -6,7 +6,6 @@ const BACKEND_PORT = 3001;
 
 console.log(`[TravelBox] Starting...`);
 
-// Start NestJS backend on port 3001
 const backend = spawn('node', ['dist/src/main'], {
   cwd: path.join(__dirname, 'backend'),
   env: { ...process.env, PORT: String(BACKEND_PORT), NODE_ENV: 'production' },
@@ -15,7 +14,6 @@ const backend = spawn('node', ['dist/src/main'], {
 backend.stdout.on('data', (d) => process.stdout.write(`[API] ${d}`));
 backend.stderr.on('data', (d) => process.stderr.write(`[API] ${d}`));
 
-// Start Next.js frontend on PORT (standalone server deployed to frontend/)
 const frontendDir = path.join(__dirname, 'frontend');
 const frontend = spawn('node', ['server.js'], {
   cwd: frontendDir,
