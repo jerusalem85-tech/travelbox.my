@@ -1,0 +1,78 @@
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Deploy to Hostinger via API
+        env:
+          HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
+          DOMAIN: travelbox.my
+          USERNAME: u908372329
+        run: |
+          set -e
+          API_BASE="https://developers.hostinger.com"
+
+          echo "::group::Getting upload credentials"
+          CREDS=$(curl -sS -X POST "$API_BASE/api/hosting/v1/files/upload-urls" \
+            -H "Authorization: Bearer $HOSTINGER_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"username\":\"$USERNAME\",\"domain\":\"$DOMAIN\"}")
+          UPLOAD_URL=$(echo "$CREDS" | jq -r '.url')
+          AUTH_TOKEN=$(echo "$CREDS" | jq -r '.auth_key')
+          AUTH_REST=$(echo "$CREDS" | jq -r '.rest_auth_key')
+          echo "Got upload credentials"
+          echo "::endgroup::"
+
+          echo "::group::Creating archive"
+          cd out
+          zip -r ../deploy.zip .
+          cd ..
+          FILE_SIZE=$(stat -c%s deploy.zip)
+          echo "Archive: deploy.zip ($FILE_SIZE bytes)"
+          echo "::endgroup::"
+
+          echo "::group::Uploading archive"
+          CLEAN_URL="${UPLOAD_URL%/}"
+          UPLOAD_PATH="${CLEAN_URL}/deploy.zip?override=true"
+
+          HTTP_CODE=$(curl -sS -o /dev/null -w "%{http_code}" -X POST "$UPLOAD_PATH" \
+            -H "X-Auth: $AUTH_TOKEN" \
+            -H "X-Auth-Rest: $AUTH_REST" \
+            -H "upload-length: $FILE_SIZE" \
+            -H "upload-offset: 0")
+          echo "Init status: $HTTP_CODE"
+          [ "$HTTP_CODE" = "201" ] || { echo "Init failed"; exit 1; }
+
+          HTTP_CODE=$(curl -sS -o /dev/null -w "%{http_code}" -X PATCH "$UPLOAD_PATH" \
+            -H "X-Auth: $AUTH_TOKEN" \
+            -H "X-Auth-Rest: $AUTH_REST" \
+            -H "upload-offset: 0" \
+            -H "Content-Type: application/offset+octet-stream" \
+            --data-binary "@deploy.zip")
+          echo "Upload status: $HTTP_CODE"
+          [ "$HTTP_CODE" = "204" ] || { echo "Upload failed"; exit 1; }
+          echo "::endgroup::"
+
+          echo "::group::Triggering deployment"
+          DEPLOY=$(curl -sS -X POST "$API_BASE/api/hosting/v1/accounts/$USERNAME/websites/$DOMAIN/deploy" \
+            -H "Authorization: Bearer $HOSTINGER_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"archive_path":"deploy.zip"}')
+          echo "Deployment result: $DEPLOY"
+          echo "::endgroup::"
+
+          rm -f deploy.zip
