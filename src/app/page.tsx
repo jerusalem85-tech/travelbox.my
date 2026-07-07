@@ -1,85 +1,15 @@
-"use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Plane, Lock, User } from "lucide-react";
-
-export default function HomePage() {
-  const router = useRouter();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (username === "admin" && password === "admin") {
-      localStorage.setItem("travelbox_auth", "true");
-      router.push("/dashboard");
-    } else {
-      setError("اسم المستخدم أو كلمة المرور غير صحيحة");
-    }
-  };
-
+export default function UnderConstruction() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-900 p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-sm mb-4">
-            <Plane className="w-10 h-10 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-white">TravelBox</h1>
-          <p className="text-blue-200 mt-2">نظام الإدارة والمحاسبة لوكالات السفر</p>
+      <div className="text-center">
+        <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-white/10 backdrop-blur-sm mb-6">
+          <svg className="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 17.25v-.228a4.5 4.5 0 0 0-.12-1.03l-2.268-9.64a3.375 3.375 0 0 0-3.285-2.602H7.923a3.375 3.375 0 0 0-3.285 2.602l-2.268 9.64a4.5 4.5 0 0 0-.12 1.03v.228m19.5 0a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3m19.5 0a3 3 0 0 0-3-3H5.25a3 3 0 0 0-3 3m16.5 0h.008v.008h-.008v-.008Z" />
+          </svg>
         </div>
-
-        <form
-          onSubmit={handleLogin}
-          className="bg-white rounded-2xl shadow-2xl p-8 space-y-6"
-        >
-          <h2 className="text-xl font-semibold text-center text-gray-800">
-            تسجيل الدخول
-          </h2>
-
-          {error && (
-            <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg text-center">
-              {error}
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <div className="relative">
-              <User className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="اسم المستخدم"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full pr-11 pl-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-              />
-            </div>
-
-            <div className="relative">
-              <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="password"
-                placeholder="كلمة المرور"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full pr-11 pl-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors"
-          >
-            دخول
-          </button>
-
-          <p className="text-xs text-center text-gray-400">
-            افتراضي: admin / admin
-          </p>
-        </form>
+        <h1 className="text-4xl font-bold text-white mb-4">Under Construction</h1>
+        <p className="text-xl text-blue-200 mb-2">TravelBox</p>
+        <p className="text-blue-300/70">We're working on something great. Stay tuned.</p>
       </div>
     </div>
   );
