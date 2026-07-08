@@ -7,7 +7,7 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3001', 'https://travelbox.my'],
+    origin: ['http://localhost:3000', 'http://localhost:3001', 'https://travelbox.my', 'https://api.travelbox.my'],
     credentials: true,
   });
 
