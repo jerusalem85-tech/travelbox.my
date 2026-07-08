@@ -28,6 +28,12 @@ export const api = {
         method: "POST",
         body: JSON.stringify({ email, password }),
       }),
-    profile: () => request<{ id: string; email: string; firstName: string; lastName: string; role: string }>("/auth/profile"),
+    profile: () => request<{ id: string; email: string; firstName: string; lastName: string; role: string }>("/auth/me"),
+    register: (data: { email: string; password: string; firstName: string; lastName: string }) =>
+      request<{ accessToken: string; user: { id: string; email: string; firstName: string; lastName: string; role: string } }>("/auth/register", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    logout: () => request<void>("/auth/logout", { method: "POST" }),
   },
 };

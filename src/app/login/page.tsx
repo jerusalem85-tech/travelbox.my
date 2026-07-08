@@ -23,7 +23,7 @@ export default function LoginPage() {
       localStorage.setItem("travelbox_user", JSON.stringify(res.user));
       router.push("/dashboard");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "فشل تسجيل الدخول");
+      setError(err instanceof Error ? err.message : "Login failed");
     } finally {
       setLoading(false);
     }
@@ -37,12 +37,12 @@ export default function LoginPage() {
             <Plane className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-white">TravelBox</h1>
-          <p className="text-blue-200 mt-2">نظام إدارة وكالات السفر</p>
+          <p className="text-blue-200 mt-2">Travel Agency Management System</p>
         </div>
 
         <div className="bg-white rounded-2xl p-8 shadow-xl">
           <h2 className="text-xl font-semibold text-gray-900 mb-6 text-center">
-            تسجيل الدخول
+            Sign In
           </h2>
 
           {error && (
@@ -54,7 +54,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                البريد الإلكتروني
+                Email
               </label>
               <input
                 type="email"
@@ -68,7 +68,7 @@ export default function LoginPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                كلمة المرور
+                Password
               </label>
               <div className="relative">
                 <input
@@ -94,7 +94,7 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium rounded-xl transition-colors"
             >
-              {loading ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
+              {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
         </div>

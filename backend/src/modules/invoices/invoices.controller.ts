@@ -1,37 +1,25 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
 import { InvoicesService } from './invoices.service';
-import { CreateInvoiceDto } from './dto/create-invoice.dto';
-import { UpdateInvoiceDto } from './dto/update-invoice.dto';
-import { CurrentUser } from '../../core/decorators/current-user.decorator';
+import { CreateInvoiceDto, UpdateInvoiceDto } from './dto/create-invoice.dto';
 
-@UseGuards(AuthGuard('jwt'))
 @Controller('invoices')
 export class InvoicesController {
-  constructor(private readonly invoicesService: InvoicesService) {}
+  constructor(private invoices: InvoicesService) {}
 
   @Post()
-  create(@Body() dto: CreateInvoiceDto, @CurrentUser('id') userId: string) {
-    return this.invoicesService.create(dto, userId);
-  }
+  create(@Body() dto: CreateInvoiceDto) { return this.invoices.create(dto); }
 
   @Get()
-  findAll() {
-    return this.invoicesService.findAll();
+  findAll(@Query('tripId') tripId?: string, @Query('status') status?: string) {
+    return this.invoices.findAll(tripId, status);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.invoicesService.findOne(id);
-  }
+  findById(@Param('id') id: string) { return this.invoices.findById(id); }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateInvoiceDto) {
-    return this.invoicesService.update(id, dto);
-  }
+  update(@Param('id') id: string, @Body() dto: UpdateInvoiceDto) { return this.invoices.update(id, dto); }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.invoicesService.remove(id);
-  }
+  remove(@Param('id') id: string) { return this.invoices.remove(id); }
 }

@@ -75,7 +75,7 @@ export default function TripsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("هل أنت متأكد من حذف هذه الرحلة؟")) return;
+    if (!confirm("Are you sure you want to delete this trip?")) return;
     try {
       await api.delete(`/trips/${id}`);
       await fetchTrips();
@@ -92,18 +92,18 @@ export default function TripsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">الرحلات</h1>
-          <p className="text-gray-500 mt-1">إدارة باقات وعروض الرحلات</p>
+          <h1 className="text-2xl font-bold text-gray-900">Trips</h1>
+          <p className="text-gray-500 mt-1">Manage trip packages and offers</p>
         </div>
         <button onClick={() => { setForm(emptyTrip); setEditingId(null); setShowForm(true); }}
           className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors">
-          <Plus className="w-4 h-4" /> إضافة رحلة
+          <Plus className="w-4 h-4" /> Add Trip
         </button>
       </div>
 
       <div className="relative">
         <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-        <input type="text" placeholder="بحث في الرحلات..." value={search} onChange={(e) => setSearch(e.target.value)}
+        <input type="text" placeholder="Search trips..." value={search} onChange={(e) => setSearch(e.target.value)}
           className="w-full pr-11 pl-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
       </div>
 
@@ -111,62 +111,62 @@ export default function TripsPage() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-auto">
             <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-lg font-semibold">{editingId ? "تعديل رحلة" : "إضافة رحلة جديدة"}</h2>
+              <h2 className="text-lg font-semibold">{editingId ? "Edit Trip" : "Add New Trip"}</h2>
               <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">عنوان الرحلة *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Trip Title *</label>
                   <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" required />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">الوجهة *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Destination *</label>
                   <input type="text" value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })}
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" required />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">الوصف</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                 <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">السعر</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
                   <input type="number" value={form.price || ""} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" min="0" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">المدة (أيام)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Duration (days)</label>
                   <input type="number" value={form.duration || ""} onChange={(e) => setForm({ ...form, duration: Number(e.target.value) })}
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" min="0" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">العدد الأقصى</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Max Capacity</label>
                   <input type="number" value={form.maxCapacity || ""} onChange={(e) => setForm({ ...form, maxCapacity: Number(e.target.value) })}
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" min="0" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">تاريخ البداية</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
                   <input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })}
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">تاريخ النهاية</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
                   <input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })}
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="submit" className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors">
-                  {editingId ? "تحديث" : "إضافة"}
+                  {editingId ? "Update" : "Add"}
                 </button>
                 <button type="button" onClick={() => setShowForm(false)}
-                  className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors">إلغاء</button>
+                  className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors">Cancel</button>
               </div>
             </form>
           </div>
@@ -176,7 +176,7 @@ export default function TripsPage() {
       {filtered.length === 0 ? (
         <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
           <Plane className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-          <p className="text-gray-500">{search ? "لا توجد نتائج للبحث" : "لا توجد رحلات بعد"}</p>
+          <p className="text-gray-500">{search ? "No results found" : "No trips yet"}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -196,8 +196,8 @@ export default function TripsPage() {
               <h3 className="font-semibold text-gray-900">{trip.title}</h3>
               <p className="text-sm text-gray-500 mt-1">{trip.destination}</p>
               <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                <span className="text-lg font-bold text-blue-600">{Number(trip.price).toLocaleString()} ر.م</span>
-                {trip.duration && <span className="text-xs text-gray-400">{trip.duration} أيام</span>}
+                <span className="text-lg font-bold text-blue-600">{Number(trip.price).toLocaleString()} $</span>
+                {trip.duration && <span className="text-xs text-gray-400">{trip.duration} days</span>}
               </div>
             </div>
           ))}

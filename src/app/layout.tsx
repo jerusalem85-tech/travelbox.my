@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "TravelBox - نظام الإدارة والمحاسبة",
-  description: "نظام إدارة ومحاسبة متكامل لوكالات السفر",
+  title: "TravelBox - Travel Agency ERP",
+  description: "Integrated management and accounting system for travel agencies",
 };
 
 export default function RootLayout({
@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar" dir="rtl">
+    <html lang="en" dir="ltr">
       <body className="min-h-screen antialiased">{children}</body>
     </html>
   );

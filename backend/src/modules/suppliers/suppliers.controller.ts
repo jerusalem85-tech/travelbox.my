@@ -1,36 +1,33 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
 import { SuppliersService } from './suppliers.service';
-import { CreateSupplierDto } from './dto/create-supplier.dto';
-import { UpdateSupplierDto } from './dto/update-supplier.dto';
+import { CreateSupplierDto, UpdateSupplierDto } from './dto/create-supplier.dto';
 
-@UseGuards(AuthGuard('jwt'))
 @Controller('suppliers')
 export class SuppliersController {
-  constructor(private readonly suppliersService: SuppliersService) {}
+  constructor(private suppliers: SuppliersService) {}
 
   @Post()
-  create(@Body() createSupplierDto: CreateSupplierDto) {
-    return this.suppliersService.create(createSupplierDto);
+  create(@Body() dto: CreateSupplierDto) {
+    return this.suppliers.create(dto);
   }
 
   @Get()
-  findAll() {
-    return this.suppliersService.findAll();
+  findAll(@Query('type') type?: string) {
+    return this.suppliers.findAll(type);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.suppliersService.findOne(id);
+  findById(@Param('id') id: string) {
+    return this.suppliers.findById(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSupplierDto: UpdateSupplierDto) {
-    return this.suppliersService.update(id, updateSupplierDto);
+  update(@Param('id') id: string, @Body() dto: UpdateSupplierDto) {
+    return this.suppliers.update(id, dto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.suppliersService.remove(id);
+    return this.suppliers.remove(id);
   }
 }

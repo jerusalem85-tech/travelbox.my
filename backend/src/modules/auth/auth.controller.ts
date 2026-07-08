@@ -1,26 +1,40 @@
-import { Controller, Post, Get, Body, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Controller, Post, Get, Body } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDto, RegisterDto } from './auth.dto';
-import { CurrentUser } from '../../core/decorators/current-user.decorator';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 
 @Controller('auth')
 export class AuthController {
   constructor(private auth: AuthService) {}
 
+  @Public()
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.auth.login(dto);
   }
 
+  @Public()
   @Post('register')
   register(@Body() dto: RegisterDto) {
     return this.auth.register(dto);
   }
 
-  @UseGuards(AuthGuard('jwt'))
-  @Get('profile')
-  profile(@CurrentUser() user: any) {
+  @Public()
+  @Post('refresh')
+  refresh(@Body() dto: RefreshTokenDto) {
+    return this.auth.refresh(dto.refreshToken);
+  }
+
+  @Post('logout')
+  logout(@CurrentUser('id') userId: string) {
+    return this.auth.logout(userId);
+  }
+
+  @Get('me')
+  getProfile(@CurrentUser() user: any) {
     return user;
   }
 }

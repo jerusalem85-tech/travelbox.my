@@ -1,23 +1,18 @@
-import { IsString, IsOptional, IsNumber, IsDateString } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsDateString, IsBoolean } from 'class-validator';
+import { TripStatus, Currency } from '@prisma/client';
 
 export class CreateTripDto {
+  @IsOptional()
   @IsString()
-  title: string;
-
-  @IsString()
-  destination: string;
+  name?: string;
 
   @IsOptional()
   @IsString()
   description?: string;
 
   @IsOptional()
-  @IsNumber()
-  price?: number;
-
-  @IsOptional()
-  @IsNumber()
-  duration?: number;
+  @IsEnum(TripStatus)
+  status?: TripStatus;
 
   @IsOptional()
   @IsDateString()
@@ -28,10 +23,71 @@ export class CreateTripDto {
   endDate?: string;
 
   @IsOptional()
-  @IsString()
-  status?: string;
+  @IsEnum(Currency)
+  currency?: Currency;
 
   @IsOptional()
-  @IsNumber()
-  maxCapacity?: number;
+  @IsString()
+  assignedToId?: string;
+
+  @IsOptional()
+  @IsString()
+  source?: string;
+
+  @IsOptional()
+  @IsString()
+  internalNotes?: string;
+
+  @IsOptional()
+  tags?: string[];
+}
+
+export class UpdateTripDto {
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsEnum(TripStatus)
+  status?: TripStatus;
+
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  endDate?: string;
+
+  @IsOptional()
+  @IsEnum(Currency)
+  currency?: Currency;
+
+  @IsOptional()
+  @IsString()
+  assignedToId?: string;
+
+  @IsOptional()
+  @IsString()
+  source?: string;
+
+  @IsOptional()
+  @IsString()
+  internalNotes?: string;
+
+  @IsOptional()
+  tags?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
+
+export class ChangeStatusDto {
+  @IsEnum(TripStatus)
+  status: TripStatus;
 }

@@ -1,28 +1,71 @@
-import { IsString, IsOptional, IsNumber, IsEnum, IsDateString } from 'class-validator';
-import { InvoiceStatus } from '@prisma/client';
+import { IsEnum, IsOptional, IsString, IsUUID, IsNumber, IsDateString } from 'class-validator';
+import { DocumentType, DocumentStatus, Currency } from '@prisma/client';
 
 export class CreateInvoiceDto {
-  @IsOptional()
-  @IsString()
-  clientId?: string;
+  @IsUUID()
+  tripId: string;
+
+  @IsEnum(DocumentType)
+  documentType?: DocumentType;
 
   @IsOptional()
-  @IsString()
-  bookingId?: string;
-
-  @IsOptional()
-  @IsString()
-  description?: string;
-
-  @IsOptional()
-  @IsNumber()
-  amount?: number;
-
-  @IsOptional()
-  @IsEnum(InvoiceStatus)
-  status?: InvoiceStatus;
+  @IsUUID()
+  customerId?: string;
 
   @IsOptional()
   @IsDateString()
-  date?: string;
+  issueDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  dueDate?: string;
+
+  @IsNumber()
+  subtotal: number;
+
+  @IsOptional()
+  @IsNumber()
+  taxRate?: number;
+
+  @IsOptional()
+  @IsNumber()
+  discountPct?: number;
+
+  @IsOptional()
+  @IsEnum(Currency)
+  currency?: Currency;
+
+  @IsOptional()
+  @IsString()
+  notes?: string;
+
+  @IsOptional()
+  @IsString()
+  terms?: string;
+}
+
+export class UpdateInvoiceDto {
+  @IsOptional()
+  @IsEnum(DocumentStatus)
+  status?: DocumentStatus;
+
+  @IsOptional()
+  @IsDateString()
+  dueDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  paidDate?: string;
+
+  @IsOptional()
+  @IsNumber()
+  amountPaid?: number;
+
+  @IsOptional()
+  @IsString()
+  notes?: string;
+
+  @IsOptional()
+  @IsString()
+  terms?: string;
 }

@@ -1,36 +1,58 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Controller, Get, Post, Patch, Delete, Body, Param } from '@nestjs/common';
 import { TripsService } from './trips.service';
-import { CreateTripDto } from './dto/create-trip.dto';
-import { UpdateTripDto } from './dto/update-trip.dto';
+import { CreateTripDto, UpdateTripDto, ChangeStatusDto } from './dto/create-trip.dto';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
-@UseGuards(AuthGuard('jwt'))
 @Controller('trips')
 export class TripsController {
-  constructor(private readonly tripsService: TripsService) {}
+  constructor(private trips: TripsService) {}
 
   @Post()
-  create(@Body() createTripDto: CreateTripDto) {
-    return this.tripsService.create(createTripDto);
+  create(@Body() dto: CreateTripDto, @CurrentUser('id') userId: string) {
+    return this.trips.create(dto, userId);
   }
 
   @Get()
   findAll() {
-    return this.tripsService.findAll();
+    return this.trips.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.tripsService.findOne(id);
+  findById(@Param('id') id: string) {
+    return this.trips.findById(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTripDto: UpdateTripDto) {
-    return this.tripsService.update(id, updateTripDto);
+  update(@Param('id') id: string, @Body() dto: UpdateTripDto) {
+    return this.trips.update(id, dto);
+  }
+
+  @Patch(':id/status')
+  changeStatus(
+    @Param('id') id: string,
+    @Body() dto: ChangeStatusDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.trips.changeStatus(id, dto, userId);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.tripsService.remove(id);
+    return this.trips.remove(id);
+  }
+
+  @Post(':id/customers/:customerId')
+  addCustomer(
+    @Param('id') tripId: string,
+    @Param('customerId') customerId: string,
+    @Body('isPrimary') isPrimary?: boolean,
+    @Body('role') role?: string,
+  ) {
+    return this.trips.addCustomer(tripId, customerId, isPrimary, role);
+  }
+
+  @Get(':id/profit')
+  getProfitSummary(@Param('id') id: string) {
+    return this.trips.getProfitSummary(id);
   }
 }
