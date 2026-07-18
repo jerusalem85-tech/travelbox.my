@@ -24,12 +24,15 @@ class NotificationBell extends Component
 
     public function refreshCount(): void
     {
-        $this->unreadCount = auth()->user()->unreadNotifications()->count();
+        $user = auth()->user();
+        $this->unreadCount = $user ? $user->unreadNotifications()->count() : 0;
     }
 
     public function markAsRead(string $notificationId): void
     {
-        $notification = auth()->user()->notifications()->find($notificationId);
+        $user = auth()->user();
+        if (!$user) return;
+        $notification = $user->notifications()->find($notificationId);
         if ($notification) {
             $notification->markAsRead();
             $this->refreshCount();
@@ -38,14 +41,17 @@ class NotificationBell extends Component
 
     public function markAllAsRead(): void
     {
-        auth()->user()->unreadNotifications->markAsRead();
+        $user = auth()->user();
+        if (!$user) return;
+        $user->unreadNotifications->markAsRead();
         $this->refreshCount();
     }
 
     public function render()
     {
+        $user = auth()->user();
         return view('livewire.notification-bell', [
-            'notifications' => auth()->user()->notifications()->latest()->take(10)->get(),
+            'notifications' => $user ? $user->notifications()->latest()->take(10)->get() : collect(),
         ]);
     }
 }

@@ -71,7 +71,7 @@ class PaymentForm extends Component
             'reference' => $this->reference ?: null,
             'description' => $this->description ?: null,
             'status' => $this->status,
-            'created_by' => auth()->id(),
+            'created_by' => auth()->id() ?? 1,
         ];
 
         $accounting = app(AccountingService::class);

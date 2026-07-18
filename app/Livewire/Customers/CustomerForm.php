@@ -216,7 +216,7 @@ class CustomerForm extends Component
             $this->redirect(route('customers.show', $this->customer), navigate: true);
         } else {
             $data['customer_code'] = $this->generateCustomerCode();
-            $data['created_by'] = auth()->id();
+            $data['created_by'] = auth()->id() ?? 1;
             $customer = Customer::create($data);
             $this->dispatch('notify', type: 'success', title: 'Customer Created', message: 'Customer created successfully.');
             $this->redirect(route('customers.show', $customer), navigate: true);

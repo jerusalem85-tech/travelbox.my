@@ -101,7 +101,7 @@ class SupplierForm extends Component
             $this->redirect(route('suppliers.show', $this->supplier), navigate: true);
         } else {
             $data['supplier_code'] = $this->generateCode();
-            $data['created_by'] = auth()->id();
+            $data['created_by'] = auth()->id() ?? 1;
             $supplier = Supplier::create($data);
             $this->dispatch('notify', type: 'success', title: 'Supplier Created', message: 'Supplier created successfully.');
             $this->redirect(route('suppliers.show', $supplier), navigate: true);

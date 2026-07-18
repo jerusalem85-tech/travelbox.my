@@ -89,7 +89,7 @@ class ExpenseForm extends Component
             $this->expense->update($data);
             $this->dispatch('notify', type: 'success', title: 'Updated', message: 'Expense updated.');
         } else {
-            $data['created_by'] = auth()->id();
+            $data['created_by'] = auth()->id() ?? 1;
             GeneralExpense::create($data);
 
             try {

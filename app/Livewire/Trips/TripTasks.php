@@ -61,7 +61,7 @@ class TripTasks extends Component
             $this->trip->logTimeline('task_edited', "Updated task: {$this->title}");
         } else {
             $data['trip_id'] = $this->trip->id;
-            $data['created_by'] = Auth::id();
+            $data['created_by'] = auth()->id() ?? 1;
             Task::create($data);
             $this->trip->logTimeline('task_added', "Added task: {$this->title}");
             if ($this->due_date) {

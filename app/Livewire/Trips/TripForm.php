@@ -200,7 +200,7 @@ class TripForm extends Component
             $this->redirect(route('trips.show', $this->trip), navigate: true);
         } else {
             $data['trip_number'] = $this->generateTripNumber();
-            $data['created_by'] = auth()->id();
+            $data['created_by'] = auth()->id() ?? 1;
             $trip = Trip::create($data);
 
             $trip->logTimeline('trip_created', "Trip {$trip->trip_number} created by " . auth()->user()?->name);
@@ -983,7 +983,7 @@ class TripForm extends Component
                 'trip_number' => 'TEMP-' . uniqid(),
                 'customer_id' => $this->customer_id ?: null,
                 'status' => 'enquiry',
-                'created_by' => auth()->id(),
+                'created_by' => auth()->id() ?? 1,
             ]);
             $this->trip = $t;
             $this->editing = true;
